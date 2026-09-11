@@ -1,0 +1,59 @@
+# Recess
+
+See who's free on campus, right now.
+
+## Setup (15 minutes)
+
+### 1. Create a Supabase project
+1. Go to [supabase.com](https://supabase.com) → New project (free tier is fine)
+2. Wait for it to finish provisioning (~2 min)
+
+### 2. Set up the database
+1. In your Supabase project, open **SQL Editor** → **New query**
+2. Paste the contents of `supabase/schema.sql` and run it
+   - This creates the `statuses` table with row-level security, so students can only edit/delete their own status but everyone can read the board
+
+### 2a. Set the owner email
+The board owner (currently set to `cherryyyypieeee17@gmail.com`) gets a moderation badge and can remove anyone's post. To change it, update it in **two places**:
+- `supabase/schema.sql` — the `is_owner_email()` function (re-run this in SQL Editor after changing it)
+- `src/Board.jsx` — the `OWNER_EMAIL` constant near the top
+
+### 3. Configure auth
+1. In Supabase, go to **Authentication → Providers** and make sure **Email** is enabled
+2. Go to **Authentication → URL Configuration** and set your Site URL (use `http://localhost:5173` for local dev, your real domain once deployed)
+3. (Optional but recommended) Open `src/App.jsx` and set `ALLOWED_EMAIL_DOMAIN` to your college's email domain (e.g. `"college.edu"`) so only students with that email can sign in
+
+### 4. Connect your app to Supabase
+1. In Supabase, go to **Project Settings → API**
+2. Copy the **Project URL** and the **anon public** key
+3. In this project, copy `.env.example` to `.env` and paste them in:
+
+
+### 5. Run it locally
+```bash
+npm install
+npm run dev
+```
+Open the URL it gives you (usually `http://localhost:5173`).
+
+### 6. Try it
+- Enter your email → check your inbox for a magic sign-in link → click it
+- Pick a display name
+- Mark yourself free and post
+- Open the same URL in another browser (or incognito) with a different email to simulate a second student and see the board update live
+
+## Deploying for real
+
+1. Push this project to a GitHub repo
+2. Go to [vercel.com](https://vercel.com) → New Project → import the repo
+3. Add the same two environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in Vercel's project settings
+4. Deploy — you'll get a live URL
+5. Go back to Supabase → **Authentication → URL Configuration** and update the Site URL to your real Vercel domain, or magic links will redirect to localhost
+
+Once deployed, anyone can open the link on their phone and use **"Add to Home Screen"** (Safari/Chrome) to install it like an app — that's the PWA behavior configured in `vite.config.js`.
+
+## What's still missing for a wider launch
+- **Icons**: add real `icon-192.png` / `icon-512.png` in `public/` for the install prompt to look polished
+- **Cleanup job**: `cleanup_expired_statuses()` in the schema exists but isn't scheduled — set up a Supabase Cron job (Database → Cron) to run it daily
+- **Push notifications**: not included — would need a service worker + a push provider (e.g. OneSignal) layered on top
+- **Rate limiting / abuse**: none yet — fine for a friend-group pilot, worth adding before a wider release
